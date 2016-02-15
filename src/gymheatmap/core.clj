@@ -9,12 +9,13 @@
             [seesaw.core :refer :all])
   (:import org.tc33.jheatchart.HeatChart))
 
-;; 2/2/2015 17:19
 (def dusk-till-dawn (for [h (range 0 24)
                           m [0 30]]
                       (str h ":" m)))
 
 (defn heat-chart
+  "Produces a fairly generic heat map. Takes an array of z-values that show how deeply something should be colored.
+  Arrays are rows, the individual cells are columns"
   ([matrix]
    (HeatChart. (into-array (map double-array matrix))))
   ([matrix & {:keys [title x-label y-label] :or {title "Heat-Chart"
@@ -25,16 +26,19 @@
      (.setXAxisLabel x-label)
      (.setYAxisLabel y-label))))
 
-(defn day-time-heat-chart [matrix]
+(defn day-time-heat-chart
+  "Produces a heatmap with correct labels"
+  [matrix]
   (doto (heat-chart matrix :title "Gym Swipes" :x-label "Time" :y-label "Day of Week")
     (.setYValues (to-array ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"]))
     (.setXValues (to-array dusk-till-dawn))))
 
-
 (defn save-heat-chart [heat-chart path]
   (.saveToFile heat-chart (io/file path)))
 
-(defn show-heat-chart [heat-chart]
+(defn show-heat-chart
+  "Nice for testing!"
+  [heat-chart]
   (->
    (frame
     :title "Graph"
@@ -42,24 +46,15 @@
    pack!
    show!))
 
-
 (defn slurp-resource [name]
   (slurp
    (io/file
     (io/resource
      name))))
 
-
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
-
 (defn parse-datetime [dt]
   (let [custom-formatter (f/formatter "M/d/yyyy H:mm")]
     (f/parse custom-formatter dt)))
-
-(def dt (parse-datetime  "2/1/2016 20:53"))
 
 (defn round-to-nearest-half-hour [dt]
   (let [minutes (t/minute dt)]
@@ -69,10 +64,11 @@
       (< minutes 45) (t/minus dt (t/minutes (- minutes 30)))
       :leq-60 (t/plus dt (t/minutes (- 60 minutes))))))
 
-
 (def gym-swipes (slurp-resource "gyminout.csv"))
 
-(defn parse-swipes [swipes]
+(defn parse-swipes
+  "Parse the swiped CSV, get the 'IN' swipes, and round to the nearest half hour. Returns an array of clj-time objects"
+  [swipes]
   (->> (csv/read-csv swipes)
        (filter (fn [[_ in-or-out _]] (= "In" in-or-out)))
        (map (fn [[_ _ dt]]
@@ -92,7 +88,7 @@
   (group-by t/day-of-week swipes))
 
 (defn as-hour-str
-  "joda time to hour string"
+  "clj time to hour string"
   [dt]
   (str (t/hour dt) ":" (t/minute dt)))
 
@@ -112,15 +108,31 @@
          (let [day-swipes (get dow day)]
            (mapv (fn [time] (get day-swipes time)) dusk-till-dawn)))))
 
+;; -------------------------
+;; Main part
 
-(defn swipe-in-count []
-  (->> (-> gym-swipes
-           parse-swipes
-           gym-occupancy
-           swipes-by-weekday)
-       (map (fn [[day swipes]]            ;gives me the swipe-in frequency by DoW
+(defn produce-heatmap [swipes-by-dow]
+  (->> swipes-by-dow
+       (map (fn [[day swipes]] ;gives me the swipe-in frequency by DoW
               [day (map-to-times swipes)]))
        (into (hash-map))
        heatchart-format-array
       day-time-heat-chart))
 
+(defn swipe-in-graph
+  "Just swipe-ins to the gym"
+  []
+  (produce-heatmap (-> gym-swipes
+                   parse-swipes
+                   swipes-by-weekday)))
+
+(defn gym-occupancy-graph
+  "Assumes people stay in the gym for one hour"
+  []
+  (produce-heatmap (-> gym-swipes
+                   parse-swipes
+                   gym-occupancy 
+                   swipes-by-weekday)))
+(defn save-graphs [ ]
+  (save-heat-chart (swipe-in-graph) "/tmp/gym-swipe-in-heatmap.png")
+  (save-heat-chart (gym-occupancy-graph) "/tmp/gym-occupancy-heatmap.png"))
