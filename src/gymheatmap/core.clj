@@ -31,7 +31,8 @@
   [matrix]
   (doto (heat-chart matrix :title "Gym Swipes" :x-label "Time" :y-label "Day of Week")
     (.setYValues (to-array ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"]))
-    (.setXValues (to-array dusk-till-dawn))))
+    (.setXValues (to-array dusk-till-dawn))
+    (.setHighValueColour java.awt.Color/red)))
 
 (defn save-heat-chart [heat-chart path]
   (.saveToFile heat-chart (io/file path)))
@@ -133,6 +134,8 @@
                    parse-swipes
                    gym-occupancy 
                    swipes-by-weekday)))
+
 (defn save-graphs [ ]
   (save-heat-chart (swipe-in-graph) "/tmp/gym-swipe-in-heatmap.png")
-  (save-heat-chart (gym-occupancy-graph) "/tmp/gym-occupancy-heatmap.png"))
+  (save-heat-chart (gym-occupancy-graph) "/tmp/gym-occupancy-heatmap.png")
+  [:done "/tmp/gym-swipe-in-heatmap.png" "/tmp/gym-occupancy-heatmap.png"])
