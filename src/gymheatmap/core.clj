@@ -84,6 +84,11 @@
                          (t/plus swipe-in (t/minutes 30))
                          (t/plus swipe-in (t/minutes 60))])
           swipe-ins))
+(defn shower-occupancy
+  "Assume people stay in the gym for an hour and then they shower"
+  [swipe-ins]
+  (map (fn [swipe-in] (t/plus swipe-in (t/minutes 60)))
+          swipe-ins))
 
 (defn swipes-by-weekday [swipes]
   (group-by t/day-of-week swipes))
@@ -135,7 +140,21 @@
                    gym-occupancy 
                    swipes-by-weekday)))
 
+(defn shower-occupancy-graph
+  "Assumes people stay in the gym for one hour and then shower (for half an hour?!)"
+  []
+  (produce-heatmap (-> gym-swipes
+                   parse-swipes
+                   shower-occupancy 
+                   swipes-by-weekday)))
+
 (defn save-graphs [ ]
-  (save-heat-chart (swipe-in-graph) "/tmp/gym-swipe-in-heatmap.png")
-  (save-heat-chart (gym-occupancy-graph) "/tmp/gym-occupancy-heatmap.png")
-  [:done "/tmp/gym-swipe-in-heatmap.png" "/tmp/gym-occupancy-heatmap.png"])
+  (save-heat-chart (doto (swipe-in-graph)
+                       (.setTitle "Gym Swipe-Ins")) "/tmp/gym-swipe-in-heatmap.png")
+  (save-heat-chart (doto (gym-occupancy-graph)
+                       (.setTitle "Gym Occupancy")
+                       (.setHighValueColour java.awt.Color/green)) "/tmp/gym-occupancy-heatmap.png")
+  (save-heat-chart (doto (shower-occupancy-graph)
+                       (.setTitle "Shower Occupancy")
+                       (.setHighValueColour java.awt.Color/blue)) "/tmp/shower-occupancy-heatmap.png")
+  [:done "/tmp/gym-swipe-in-heatmap.png" "/tmp/gym-occupancy-heatmap.png" "/tmp/shower-occupancy-heatmap.png"])
