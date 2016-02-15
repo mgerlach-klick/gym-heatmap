@@ -1,36 +1,12 @@
-# gymheatmap
+Interested in when you should go to the gym and when the showers are (statistically) free? 
+Here is a heatmap that shows swipe-ins to the gym over the past year:
 
-FIXME: description
+![](gym-swipe-in-heatmap.png)
 
-## Installation
+If we're assuming that people stay in the gym for an hour the gym occupancy looks something like this:
+![](gym-occupancy-heatmap.png)
 
-Download from http://example.com/FIXME.
+If you want to play with the data, the [raw data is here](resources/gyminout.csv) and the
+[sourcecode is available too](src/gymheatmap/core.clj).
 
-## Usage
-
-FIXME: explanation
-
-    $ java -jar gymheatmap-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
-## License
-
-Copyright © 2016 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Have fun and I hope it helps somebody :)
